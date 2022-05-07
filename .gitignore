@@ -4,6 +4,9 @@
 .settings/
 .recommenders/
 
+#VScode
+.vscode/
+
 # Intellij
 .idea/
 *.iml
