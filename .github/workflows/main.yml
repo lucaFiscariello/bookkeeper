@@ -28,7 +28,7 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         SONAR_TOKEN: ${{ secrets.SONAR_SECRET }}
 
-      run: mvn -B package sonar:sonar -Dsonar.host.url=https://sonarcloud.io -Dsonar.organization=lucafiscariello -Dsonar.projectKey=lucaFiscariello_bookkeeper -Dsonar.login=$SONAR_GIT_ACTIONS -DskipTests  --file pom.xml
+      run:  mvn verify sonar:sonar -Dsonar.login=$SONAR_GIT_ACTIONS  --file pom.xml
 
 
 
