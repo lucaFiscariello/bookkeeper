@@ -104,6 +104,7 @@
       <organizationUrl>http://www.apache.org</organizationUrl>
     </developer>
   </developers>
+
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
@@ -206,6 +207,13 @@
     <forkCount.variable>1</forkCount.variable>
     <servlet-api.version>4.0.0</servlet-api.version>
     <rxjava.version>3.0.1</rxjava.version>
+
+    <sonar.host.url>https://sonarcloud.io</sonar.host.url>
+    <sonar.organization>lucafiscariello</sonar.organization>
+    <sonar.projectKey>lucaFiscariello_bookkeeper</sonar.projectKey>
+    <sonar.login>56b3ead63618d07d767a58416b0911f0c2dcdcb2</sonar.login>
+    <sonar.moduleKey>${artifactId}</sonar.moduleKey>
+
   </properties>
 
   <!-- dependency definitions -->
