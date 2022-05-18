@@ -40,7 +40,7 @@
                         <goals>
                             <goal>report-aggregate</goal>
                         </goals>
-                        <phase>package</phase>
+                        <phase>verify</phase>
                     </execution>
                 </executions>
             </plugin>

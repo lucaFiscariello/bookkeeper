@@ -213,6 +213,7 @@
     <sonar.organization>lucafiscariello</sonar.organization>
     <sonar.projectKey>lucaFiscariello_bookkeeper</sonar.projectKey>
     <sonar.moduleKey>${artifactId}</sonar.moduleKey>
+    <sonar.coverage.jacoco.xmlReportPaths>../JacocoIsw2/target/site/jacoco-aggregate/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
 
   </properties>
 
@@ -912,15 +913,6 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
         <version>${maven-surefire-plugin.version}</version>
-        <configuration>
-          <argLine>-Xmx2G -Djava.net.preferIPv4Stack=true -Dio.netty.leakDetection.level=paranoid</argLine>
-          <redirectTestOutputToFile>${redirectTestOutputToFile}</redirectTestOutputToFile>
-          <forkCount>${forkCount.variable}</forkCount>
-          <reuseForks>false</reuseForks>
-          <trimStackTrace>false</trimStackTrace>
-          <forkedProcessTimeoutInSeconds>1800</forkedProcessTimeoutInSeconds>
-          <rerunFailingTestsCount>${testRetryCount}</rerunFailingTestsCount>
-        </configuration>
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
