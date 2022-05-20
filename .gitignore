@@ -47,3 +47,7 @@ package-lock.json
 # gradle
 build/
 .gradle/
+
+#File coverage Local
+bookkeeper-server/coverage.ser
+bookkeeper-server/reportBadua.xml

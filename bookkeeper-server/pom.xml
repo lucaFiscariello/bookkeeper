@@ -252,13 +252,7 @@
         <artifactId>maven-surefire-plugin</artifactId>
         <version>${maven-surefire-plugin.version}</version>
         <configuration>
-          <trimStackTrace>false</trimStackTrace>
-          <properties>
-            <property>
-              <name>listener</name>
-              <value>org.apache.bookkeeper.common.testing.util.TimedOutTestsListener</value>
-            </property>
-          </properties>
+          <argLine> @{argLine} -javaagent:../BaDuaJar/ba-dua-agent-rt-0.6.1-SNAPSHOT-all.jar -Xbootclasspath/a:../BaDuaJar/ba-dua-agent-rt-0.6.1-SNAPSHOT-all.jar </argLine>
         </configuration>
       </plugin>
       <plugin>
