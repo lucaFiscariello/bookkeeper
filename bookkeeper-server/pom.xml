@@ -310,7 +310,7 @@
             <artifactId>maven-surefire-plugin</artifactId>
             <version>${maven-surefire-plugin.version}</version>
             <configuration>
-              <argLine> @{argLine} -javaagent:C:\Users\lucaf\.m2\repository\br\usp\each\saeg\ba-dua-agent-rt\0.6.1-SNAPSHOT\ba-dua-agent-rt-0.6.1-SNAPSHOT.jar -Xbootclasspath/a:C:\Users\lucaf\.m2\repository\br\usp\each\saeg\ba-dua-agent-rt\0.6.1-SNAPSHOT\ba-dua-agent-rt-0.6.1-SNAPSHOT.jar </argLine>
+              <argLine> @{argLine} -javaagent:C:\Users\lucaf\.m2\repository\br\usp\each\saeg\ba-dua-agent-rt\0.6.1-SNAPSHOT\ba-dua-agent-rt-0.6.1-SNAPSHOT-all.jar -Xbootclasspath/a:C:\Users\lucaf\.m2\repository\br\usp\each\saeg\ba-dua-agent-rt\0.6.1-SNAPSHOT\ba-dua-agent-rt-0.6.1-SNAPSHOT-all.jar </argLine>
             </configuration>
           </plugin>
         </plugins>

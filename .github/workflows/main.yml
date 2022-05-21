@@ -37,7 +37,7 @@ jobs:
       run:  mvn verify sonar:sonar -"Dsonar.login"=$SONAR_GIT_ACTIONS  --file pom.xml -PGitAction
 
     - name: create report badua
-      run: java -jar C:\Users\runneradmin\.m2\repository\br\usp\each\saeg\ba-dua-agent-rt\ba-dua-cli-0.6.1-SNAPSHOT-all.jar report -classes ../bookkeeper-server/target/classes/org/apache/bookkeeper/client -input ../bookkeeper-server/coverage.ser -xml  ..bookkeeper-server/reportBadua.xml --sm --sc
+      run: java -jar C:/Users/runneradmin/.m2/repository/br/usp/each/saeg/ba-dua-agent-rt/ba-dua-cli-0.6.1-SNAPSHOT-all.jar report -classes ../bookkeeper-server/target/classes/org/apache/bookkeeper/client -input ../bookkeeper-server/coverage.ser -xml  ..bookkeeper-server/reportBadua.xml --sm --sc
 
     - name: upload report Badua
       uses: actions/upload-artifact@v3
