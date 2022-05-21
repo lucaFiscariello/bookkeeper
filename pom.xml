@@ -213,7 +213,7 @@
     <sonar.organization>lucafiscariello</sonar.organization>
     <sonar.projectKey>lucaFiscariello_bookkeeper</sonar.projectKey>
     <sonar.moduleKey>${artifactId}</sonar.moduleKey>
-    <sonar.coverage.jacoco.xmlReportPaths>../JacocoIsw2/target/site/jacoco-aggregate/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
+    <sonar.coverage.jacoco.xmlReportPaths> ../JacocoIsw2/target/site/jacoco-aggregate/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
 
   </properties>
 
