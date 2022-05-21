@@ -45,11 +45,6 @@ jobs:
         name: report Badua
         path: bookkeeper-server/reportBadua.xml
 
-    - name: upload report Jacoco
-      uses: actions/upload-artifact@v3
-      with:
-        name: report Jacoco
-        path: target/site/jacoco/jacoco.xml
 
 
 
