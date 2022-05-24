@@ -9,13 +9,13 @@ public class PersonaTest {
     @Test
     public void test(){
         Persona p= new Persona("nome");
-        assertEquals("nome", p.getNome(1));
+        assertEquals("nome1", p.getNome(1,0));
     }
 
     @Test
     public void test2(){
         Persona p= new Persona("nome");
-        assertEquals("nomeprova", p.getNome(2));
+        assertEquals("nome2", p.getNome(2,0));
     }
     
 }
