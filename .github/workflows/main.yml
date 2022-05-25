@@ -29,7 +29,7 @@ jobs:
         cd ba-dua
         mvn install
 
-    - name: test coverage jacoco-Badua
+    - name: test coverage jacoco-Badua-Sonar
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         SONAR_TOKEN: ${{ secrets.SONAR_SECRET }}
@@ -55,7 +55,7 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
         name: report jacoco
-        path: JacocoIsw2/target
+        path: JacocoIsw2/target/site/jacoco-aggregate
 
 
 
