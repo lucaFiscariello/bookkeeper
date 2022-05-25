@@ -48,10 +48,10 @@ jobs:
     - name: upload report PIT
       uses: actions/upload-artifact@v3
       with:
-          name: report pit
-          path: bookkeeper-server/target/pit-reports
+        name: report pit
+        path: bookkeeper-server/target/pit-reports
 
-  - name: upload report Jacoco
+    - name: upload report Jacoco
       uses: actions/upload-artifact@v3
       with:
         name: report jacoco
