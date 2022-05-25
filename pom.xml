@@ -71,7 +71,6 @@
     <module>shaded</module>
     <module>microbenchmarks</module>
     <module>tests</module>
-    <module>JacocoIsw2</module>
   </modules>
   <mailingLists>
     <mailingList>
@@ -208,13 +207,6 @@
     <forkCount.variable>1</forkCount.variable>
     <servlet-api.version>4.0.0</servlet-api.version>
     <rxjava.version>3.0.1</rxjava.version>
-
-    <sonar.host.url>https://sonarcloud.io</sonar.host.url>
-    <sonar.organization>lucafiscariello</sonar.organization>
-    <sonar.projectKey>lucaFiscariello_bookkeeper</sonar.projectKey>
-    <sonar.moduleKey>${artifactId}</sonar.moduleKey>
-    <sonar.coverage.jacoco.xmlReportPaths> ../JacocoIsw2/target/site/jacoco-aggregate/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
-
   </properties>
 
   <!-- dependency definitions -->
@@ -887,18 +879,6 @@
     </pluginManagement>
     <plugins>
       <plugin>
-        <groupId>org.jacoco</groupId>
-        <artifactId>jacoco-maven-plugin</artifactId>
-        <executions>
-          <execution>
-            <id>prepare-agent</id>
-            <goals>
-              <goal>prepare-agent</goal>
-            </goals>
-          </execution>
-        </executions>
-      </plugin>
-      <plugin>
         <groupId>com.github.spotbugs</groupId>
         <artifactId>spotbugs-maven-plugin</artifactId>
         <version>${spotbugs-maven-plugin.version}</version>
@@ -1241,5 +1221,39 @@
         </plugins>
       </build>
     </profile>
+
+    <profile>
+      <id>Coverage</id>
+
+      <properties>
+        <sonar.host.url>https://sonarcloud.io</sonar.host.url>
+        <sonar.organization>lucafiscariello</sonar.organization>
+        <sonar.projectKey>lucaFiscariello_bookkeeper</sonar.projectKey>
+        <sonar.moduleKey>${artifactId}</sonar.moduleKey>
+        <sonar.coverage.jacoco.xmlReportPaths> ../JacocoIsw2/target/site/jacoco-aggregate/jacoco.xml</sonar.coverage.jacoco.xmlReportPaths>
+      </properties>
+
+      <modules>
+        <module>JacocoIsw2</module>
+      </modules>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.jacoco</groupId>
+            <artifactId>jacoco-maven-plugin</artifactId>
+            <executions>
+              <execution>
+                <id>prepare-agent</id>
+                <goals>
+                  <goal>prepare-agent</goal>
+                </goals>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+
+    </profile>
+
   </profiles>
 </project>
