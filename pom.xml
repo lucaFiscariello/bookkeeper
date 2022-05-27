@@ -1223,7 +1223,7 @@
     </profile>
 
     <profile>
-      <id>Coverage</id>
+      <id>Jacoco</id>
 
       <properties>
         <sonar.host.url>https://sonarcloud.io</sonar.host.url>
@@ -1252,7 +1252,6 @@
           </plugin>
         </plugins>
       </build>
-
     </profile>
 
   </profiles>

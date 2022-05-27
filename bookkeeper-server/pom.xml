@@ -203,32 +203,9 @@
       <version>${project.parent.version}</version>
       <scope>test</scope>
     </dependency>
-    <!-- https://mvnrepository.com/artifact/org.pitest/pitest-maven -->
-    <dependency>
-      <groupId>org.pitest</groupId>
-      <artifactId>pitest-maven</artifactId>
-      <version>1.8.0</version>
-      <type>maven-plugin</type>
-    </dependency>
-
   </dependencies>
   <build>
     <plugins>
-
-      <plugin>
-        <groupId>org.pitest</groupId>
-        <artifactId>pitest-maven</artifactId>
-        <version>1.8.0</version>
-        <configuration>
-          <targetClasses>
-            <param>org.apache.bookkeeper.client.Persona</param>
-          </targetClasses>
-          <targetTests>
-            <param>org.apache.bookkeeper.client.impl.PersonaTest</param>
-          </targetTests>
-        </configuration>
-      </plugin>
-
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>
@@ -309,7 +286,7 @@
     </profile>
 
     <profile>
-      <id>Coverage</id>
+      <id>Badua</id>
       <properties>
         <argLine> -javaagent:target/dependency/ba-dua-agent-rt-0.6.1-SNAPSHOT-all.jar -Doutput.file=target/badua.ser </argLine>
       </properties>
@@ -379,6 +356,36 @@
       </build>
     </profile>
 
+    <profile>
+      <id>Pit</id>
+      <dependencies>
+        <dependency>
+        <groupId>org.pitest</groupId>
+        <artifactId>pitest-maven</artifactId>
+        <version>1.8.0</version>
+        <type>maven-plugin</type>
+      </dependency>
+      </dependencies>
+
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.pitest</groupId>
+            <artifactId>pitest-maven</artifactId>
+            <version>1.8.0</version>
+            <configuration>
+              <targetClasses>
+                <param>org.apache.bookkeeper.client.Persona</param>
+              </targetClasses>
+              <targetTests>
+                <param>org.apache.bookkeeper.client.impl.PersonaTest</param>
+              </targetTests>
+            </configuration>
+          </plugin>
+        </plugins>
+      </build>
+
+    </profile>
     <profile>
       <id>tls-certs</id>
       <build>

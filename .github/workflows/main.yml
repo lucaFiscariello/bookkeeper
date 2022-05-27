@@ -29,12 +29,15 @@ jobs:
         cd ba-dua
         mvn install
 
-    - name: test coverage jacoco-Badua-Sonar
+    - name: test coverage jacoco-Sonar
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         SONAR_TOKEN: ${{ secrets.SONAR_SECRET }}
 
-      run:  mvn verify sonar:sonar -"Dsonar.login"=$SONAR_GIT_ACTIONS  --file pom.xml -PCoverage
+      run:  mvn verify sonar:sonar -"Dsonar.login"=$SONAR_GIT_ACTIONS  --file pom.xml -PJacoco
+
+    - name: test coverage badua
+      run: mvn verify -PBadua
 
     - name: test coverage pit
       run:  mvn test-compile org.pitest:pitest-maven:mutationCoverage -PPit

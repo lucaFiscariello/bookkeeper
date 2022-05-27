@@ -21,7 +21,7 @@
             <activation>
                 <activeByDefault>false</activeByDefault>
             </activation>
-            <id>Coverage</id>
+            <id>Jacoco</id>
             <dependencies>
                 <dependency>
                     <groupId>org.apache.bookkeeper</groupId>
