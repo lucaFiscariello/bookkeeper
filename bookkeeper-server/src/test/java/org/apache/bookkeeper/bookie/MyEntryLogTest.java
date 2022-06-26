@@ -21,6 +21,7 @@
 package org.apache.bookkeeper.bookie;
 
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.PooledByteBufAllocator;
 import io.netty.buffer.Unpooled;
 import org.apache.bookkeeper.bookie.storage.ldb.DbLedgerStorage;
 import org.apache.bookkeeper.common.allocator.PoolingPolicy;
@@ -31,18 +32,27 @@ import org.apache.bookkeeper.util.IOUtils;
 import org.apache.bookkeeper.util.PortManager;
 import org.apache.commons.io.FileUtils;
 import org.junit.After;
+import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.runners.Enclosed;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.MockitoJUnit;
+import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.MockitoRule;
 
 import java.io.File;
 import java.io.IOException;
 import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 
+import static org.apache.bookkeeper.bookie.EntryLogger.UNASSIGNED_LEDGERID;
 import static org.junit.Assert.assertEquals;
+import static org.mockito.Mockito.*;
 
 @RunWith(value = Enclosed.class)
 public class MyEntryLogTest {
@@ -92,7 +102,7 @@ public class MyEntryLogTest {
             for(int i=0; i<this.numberLogCreate; i++){
                 entry = generateEntry(this.ledgerid, i);
                 entryLogManager.addEntry(this.ledgerid, entry,true);
-                entryLogManager.createNewLog(EntryLogger.UNASSIGNED_LEDGERID);
+                entryLogManager.createNewLog(UNASSIGNED_LEDGERID);
             }
 
             assertEquals(expected, entryLogManager.getCurrentLogId());
@@ -137,7 +147,7 @@ public class MyEntryLogTest {
                 entryLogManager.addEntry(i, entry,true);
             }
 
-            entryLogManager.createNewLog(EntryLogger.UNASSIGNED_LEDGERID);
+            entryLogManager.createNewLog(UNASSIGNED_LEDGERID);
             EntryLogMetadata meta = entryLogger.extractEntryLogMetadataFromIndex(0L);
             assertEquals(this.expected,meta.getLedgersMap().containsKey(ledgeridToSearch));
 
@@ -179,10 +189,10 @@ public class MyEntryLogTest {
             for(long i  : this.listledgerid){
                 entry = generateEntry(i, 1);
                 entryLogManager.addEntry(i, entry,true);
-                entryLogManager.createNewLog(EntryLogger.UNASSIGNED_LEDGERID);
+                entryLogManager.createNewLog(UNASSIGNED_LEDGERID);
             }
 
-            entryLogManager.createNewLog(EntryLogger.UNASSIGNED_LEDGERID);
+            entryLogManager.createNewLog(UNASSIGNED_LEDGERID);
             EntryLogMetadata meta = entryLogger.extractEntryLogMetadataFromIndex(this.positionLog);
             assertEquals(this.expected,meta.getLedgersMap().containsKey(ledgeridToSearch));
 
@@ -192,6 +202,193 @@ public class MyEntryLogTest {
         }
     }
 
+
+    @RunWith(Parameterized.class)
+    public static class WhiteBoxTest  {
+
+        @Mock
+        AtomicBoolean shouldCreateNewEntryLog;
+        @Rule
+        public MockitoRule mockitoRule = MockitoJUnit.rule();
+
+        private boolean isActiveLogChannelNull;
+        private long defaulLogId;
+
+        private boolean rollLong;
+
+        private long ledgerid;
+
+        private int ensize;
+
+        private boolean shouldCNE;
+
+
+        @Parameterized.Parameters
+        public static Collection<Object[]> data() {
+            return Arrays.asList(new Object[][] {
+                    { true,1L,true,1L,1,true},
+                    { true,1L,false,1L,1,false},
+                    { true,1L,false,1L,1,true},
+                    { true,1L,true,1L,1,false},
+                    { false,1L,false,1L,1,false},
+            });
+        }
+
+        public WhiteBoxTest(boolean isActiveLogChannelNull,long defaulLogId,boolean rollLong,long ledgerid,int ensize,boolean shouldCNE) throws Exception {
+            this.isActiveLogChannelNull = isActiveLogChannelNull;
+            this.defaulLogId=defaulLogId;
+            this.rollLong=rollLong;
+            this.ledgerid=ledgerid;
+            this.ensize=ensize;
+            this.shouldCNE=shouldCNE;
+            this.shouldCreateNewEntryLog = new AtomicBoolean(shouldCNE);
+            setUpWhiteBox();
+        }
+
+        @Test
+        public void testWhiteBox() throws Exception {
+
+            EntryLogger.BufferedLogChannel buffer;
+
+            if(isActiveLogChannelNull){
+                entryLogManager.createNewLog(UNASSIGNED_LEDGERID, "Test");
+            }
+
+            buffer = entryLogManager.getCurrentLogForLedgerForAddEntry(ledgerid,ensize,rollLong);
+            assertEquals(buffer.getLogId(),defaulLogId);
+
+        }
+
+
+    }
+
+
+    @RunWith(MockitoJUnitRunner.class)
+    public static class WhiteBoxTest2 {
+
+        @Mock
+        EntryLogger.BufferedLogChannel channel;
+
+        @InjectMocks
+        static EntryLogManagerForSingleEntryLog entryLogManagerInject;
+
+        static {
+            try {
+                entryLogManagerInject = injectMock();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        private static EntryLogManagerForSingleEntryLog entryLogManagerNoInject;
+
+        static {
+            try {
+                entryLogManagerNoInject = getNoMockManager();
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+        private static EntryLogManagerForSingleEntryLog entryLogManagerTest;
+
+        @Test(expected = IOException.class)
+        public void testWhiteBox1() throws Exception {
+            setUpWhiteBoxMethod(true,true);
+            entryLogManagerTest.flushRotatedLogs();
+        }
+
+        @Test
+        public void testWhiteBox2() throws Exception {
+            setUpWhiteBoxMethod(false,false);
+            entryLogManagerTest.flushRotatedLogs();
+            assertEquals(0,entryLogManagerTest.rotatedLogChannels.size());
+        }
+
+        @Test
+        public void testWhiteBox3() throws Exception {
+            setUpWhiteBoxMethod(false,false);
+            entryLogManagerTest.flushRotatedLogs();
+            assertEquals(0,entryLogManagerTest.rotatedLogChannels.size());
+        }
+
+        @Test(expected = IOException.class)
+        public void testWhiteBox4() throws Exception {
+            setUpWhiteBoxMethod(false,true);
+            entryLogManagerTest.flushRotatedLogs();
+        }
+
+        public void setUpWhiteBoxMethod(boolean hasRotatedLogChannels,boolean throwException) throws Exception {
+
+            if(hasRotatedLogChannels){
+                EntryLogManagerForSingleEntryLog entryLogManagerHelper = (EntryLogManagerForSingleEntryLog) entryLogger.getEntryLogManager();
+                entryLogManagerHelper.createNewLog(UNASSIGNED_LEDGERID, "Test 1");
+                entryLogManagerHelper.createNewLog(UNASSIGNED_LEDGERID, "Test 2");
+            }
+
+            if(throwException){
+                entryLogManagerTest=entryLogManagerInject;
+                doThrow(new IOException()).when(channel).flushAndForceWrite(isA(boolean.class));
+                entryLogManagerTest.setCurrentLogForLedgerAndAddToRotate(1,channel);
+            }
+            else{
+                entryLogManagerTest=entryLogManagerNoInject;
+            }
+
+
+        }
+
+        public  static  EntryLogManagerForSingleEntryLog injectMock() throws IOException {
+            rootDir = createTempDir("bkTest", ".dir");
+            curDir = new File(rootDir, BookKeeperConstants.CURRENT_DIR);
+            conf = getServerConfiguration();
+            dirsMgr = new LedgerDirsManager(
+                    conf,
+                    new File[] { rootDir },
+                    new DiskChecker(
+                            conf.getDiskUsageThreshold(),
+                            conf.getDiskUsageWarnThreshold()));
+            entryLogger = new EntryLogger(conf, dirsMgr);
+
+            entryLoggerAllocator = new EntryLoggerAllocator(conf, dirsMgr, recentlyCreatedEntryLogsStatus,
+                    0, PooledByteBufAllocator.DEFAULT);
+
+            EntryLogManagerForSingleEntryLog entryLogManager = new EntryLogManagerForSingleEntryLog(conf, dirsMgr,
+                    entryLoggerAllocator, listeners, recentlyCreatedEntryLogsStatus);
+
+            return entryLogManager;
+        }
+
+        public  static  EntryLogManagerForSingleEntryLog getNoMockManager() throws IOException {
+            rootDir = createTempDir("bkTest", ".dir");
+            curDir = new File(rootDir, BookKeeperConstants.CURRENT_DIR);
+            conf = getServerConfiguration();
+            dirsMgr = new LedgerDirsManager(
+                    conf,
+                    new File[] { rootDir },
+                    new DiskChecker(
+                            conf.getDiskUsageThreshold(),
+                            conf.getDiskUsageWarnThreshold()));
+            EntryLogger entryLogger = new EntryLogger(conf, dirsMgr);
+
+            return (EntryLogManagerForSingleEntryLog) entryLogger.getEntryLogManager();
+        }
+
+    }
+
+    public static void setUpWhiteBox() throws Exception {
+        setUp();
+
+        recentlyCreatedEntryLogsStatus= mock(EntryLogger.RecentEntryLogsStatus.class);
+        doNothing().when(recentlyCreatedEntryLogsStatus).createdEntryLog(isA(Long.class));
+
+        entryLoggerAllocator = new EntryLoggerAllocator(conf, dirsMgr, recentlyCreatedEntryLogsStatus,
+                0, PooledByteBufAllocator.DEFAULT);
+
+        entryLogManager = new EntryLogManagerForSingleEntryLog(conf, dirsMgr,
+                entryLoggerAllocator, listeners, recentlyCreatedEntryLogsStatus);
+
+    }
 
     static File createTempDir(String prefix, String suffix) throws IOException {
         File dir = IOUtils.createTempDir(prefix, suffix);

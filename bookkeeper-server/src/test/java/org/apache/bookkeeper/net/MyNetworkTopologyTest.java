@@ -349,6 +349,103 @@ public class MyNetworkTopologyTest {
 
     }
 
+    @RunWith(MockitoJUnitRunner.class)
+    public static class WhiteBoxTestRemove{
+
+        private NetworkTopology networkTopology;
+        private Set<Node> allNodeGenerate;
+        private Set<Node> expected;
+        private Node validNodeToRemove;
+        private int numberRack=3;
+        private int numberAddedNode=3;
+        private String bookieId= "bookieIdScopeRack";
+        private String rackTemplate= "/rack-";
+
+
+        @Test
+        public void test1(){
+            Set<Node> actualNodes = new HashSet<>();
+            networkTopology.remove(null);
+
+            for(int i=0 ; i<numberRack; i++)
+                actualNodes.addAll(networkTopology.getLeaves(rackTemplate+i));
+
+            assertEquals(actualNodes, allNodeGenerate);
+
+        }
+
+        @Test(expected = IllegalArgumentException.class)
+        public void test2(){
+
+            NetworkTopologyImpl.InnerNode node = mock(NetworkTopologyImpl.InnerNode.class);
+            networkTopology.remove(node);
+
+        }
+
+        @Test
+        public void test3(){
+
+            Set<Node> actualNodes = new HashSet<>();
+
+            networkTopology.remove(validNodeToRemove);
+
+            for(int i=0 ; i<numberRack; i++)
+                actualNodes.addAll(networkTopology.getLeaves(rackTemplate+i));
+
+            assertEquals(expected,actualNodes);
+
+        }
+
+        @Test(expected =IllegalArgumentException.class )
+        public void test4(){
+
+            BookieId bookieIdScopeRack = BookieId.parse(bookieId);
+            BookieNode node = new BookieNode(bookieIdScopeRack, null);
+            networkTopology.remove(node);
+
+        }
+
+
+        @Test
+        public void test5(){
+            Set<Node> actualNodes = new HashSet<>();
+
+            Node node = mock(Node.class);
+            when(node.getNetworkLocation()).thenReturn("fail Location");
+            networkTopology.remove(node);
+
+            for(int i=0 ; i<numberRack; i++)
+                actualNodes.addAll(networkTopology.getLeaves(rackTemplate+i));
+
+            assertEquals(allNodeGenerate,actualNodes);
+
+        }
+
+
+        @Before
+        public void setup(){
+
+            networkTopology= new NetworkTopologyImpl();
+            allNodeGenerate = new HashSet<>();
+            expected = new HashSet<>();
+
+            BookieNode bookieRackScopeNode=null;
+
+            for(int i=0 ; i<numberRack; i++){
+                for(int j=0;j<numberAddedNode;j++){
+                    BookieId bookieIdScopeRack = BookieId.parse(bookieId+j+i);
+                    bookieRackScopeNode = new BookieNode(bookieIdScopeRack, rackTemplate+i);
+                    networkTopology.add(bookieRackScopeNode);
+                    allNodeGenerate.add(bookieRackScopeNode);
+                    expected.add(bookieRackScopeNode);
+                }
+            }
+
+            validNodeToRemove=bookieRackScopeNode;
+            expected.remove(validNodeToRemove);
+        }
+    }
+
 
 
 
