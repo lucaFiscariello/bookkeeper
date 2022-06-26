@@ -288,13 +288,13 @@
     <profile>
       <id>Badua</id>
       <properties>
-        <argLine> -javaagent:target/dependency/ba-dua-agent-rt-0.6.1-SNAPSHOT-all.jar -Doutput.file=target/badua.ser </argLine>
+        <argLine> -javaagent:target/dependency/ba-dua-agent-rt-0.6.0-all.jar -Doutput.file=target/badua.ser </argLine>
       </properties>
       <dependencies>
         <dependency>
           <groupId>br.usp.each.saeg</groupId>
           <artifactId>ba-dua-cli</artifactId>
-          <version>0.6.1-SNAPSHOT</version>
+          <version>0.6.0</version>
         </dependency>
       </dependencies>
       <build>
@@ -319,7 +319,7 @@
                       <groupId>br.usp.each.saeg</groupId>
                       <artifactId>ba-dua-agent-rt</artifactId>
                       <classifier>all</classifier>
-                      <version>0.6.1-SNAPSHOT</version>
+                      <version>0.6.0</version>
                     </artifactItem>
                   </artifactItems>
                 </configuration>

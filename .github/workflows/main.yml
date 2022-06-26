@@ -27,6 +27,7 @@ jobs:
       run: |
         git clone https://github.com/saeg/ba-dua.git
         cd ba-dua
+        git checkout d2401f052027c90c93874efbbf363705aa36e657
         mvn install
 
     - name: test coverage jacoco-Sonar
