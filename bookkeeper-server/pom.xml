@@ -375,10 +375,12 @@
             <version>1.8.0</version>
             <configuration>
               <targetClasses>
-                <param>org.apache.bookkeeper.client.Persona</param>
+                <param>org.apache.bookkeeper.bookie.EntryLogManagerForSingleEntryLog</param>
+                <param>org.apache.bookkeeper.net.NetworkTopologyImpl</param>
               </targetClasses>
               <targetTests>
-                <param>org.apache.bookkeeper.client.impl.PersonaTest</param>
+                <param>org.apache.bookkeeper.bookie.MyEntryLogTest</param>
+                <param>org.apache.bookkeeper.net.MyNetworkTopologyTest</param>
               </targetTests>
             </configuration>
           </plugin>
