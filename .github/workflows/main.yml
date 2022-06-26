@@ -10,56 +10,78 @@ on:
     branches: [ master ]
 
 jobs:
-  test:
-
+  badua:
     runs-on: windows-latest
-
     steps:
     - uses: actions/checkout@v3
-    - name: Set up JDK 17
+    - name: Set up JDK 8
       uses: actions/setup-java@v3
       with:
-        java-version: '11'
+        java-version: '8'
         distribution: 'temurin'
         cache: maven
-
     - name: Set up BaDua
       run: |
         git clone https://github.com/saeg/ba-dua.git
         cd ba-dua
         git checkout 166b53829129449becf4ae1dac1256441868e0bd
         mvn install
-
     - name: test coverage badua
       run: mvn verify -PBadua
-
-    - name: test coverage jacoco-Sonar
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        SONAR_TOKEN: ${{ secrets.SONAR_SECRET }}
-
-      run:  mvn verify sonar:sonar -"Dsonar.login"=$SONAR_GIT_ACTIONS  --file pom.xml -PJacoco
-
-    - name: test coverage pit
-      run:  mvn test-compile org.pitest:pitest-maven:mutationCoverage -PPit
-
     - name: upload report Badua
       uses: actions/upload-artifact@v3
       with:
         name: report Badua
         path: bookkeeper-server/target/badua.xml
 
-    - name: upload report PIT
-      uses: actions/upload-artifact@v3
-      with:
-        name: report pit
-        path: bookkeeper-server/target/pit-reports
 
-    - name: upload report Jacoco
-      uses: actions/upload-artifact@v3
-      with:
-        name: report jacoco
-        path: JacocoIsw2/target/site/jacoco-aggregate
+  jacoco:
+      runs-on: windows-latest
+      steps:
+        - uses: actions/checkout@v3
+        - name: Set up JDK 11
+          uses: actions/setup-java@v3
+          with:
+            java-version: '11'
+            distribution: 'temurin'
+            cache: maven
+
+        - name: test coverage jacoco-Sonar
+          env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            SONAR_TOKEN: ${{ secrets.SONAR_SECRET }}
+
+          run:  mvn verify sonar:sonar -"Dsonar.login"=$SONAR_GIT_ACTIONS  --file pom.xml -PJacoco
+
+        - name: upload report Jacoco
+          uses: actions/upload-artifact@v3
+          with:
+            name: report jacoco
+            path: JacocoIsw2/target/site/jacoco-aggregate
+
+  pit:
+
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Set up JDK 17
+        uses: actions/setup-java@v3
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: test coverage pit
+        run:  mvn test-compile org.pitest:pitest-maven:mutationCoverage -PPit
+
+      - name: upload report PIT
+        uses: actions/upload-artifact@v3
+        with:
+          name: report pit
+          path: bookkeeper-server/target/pit-reports
+
+
 
 
 
