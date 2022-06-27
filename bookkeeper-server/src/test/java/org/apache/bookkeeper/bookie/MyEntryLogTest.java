@@ -32,26 +32,25 @@ import org.apache.bookkeeper.util.IOUtils;
 import org.apache.bookkeeper.util.PortManager;
 import org.apache.commons.io.FileUtils;
 import org.junit.After;
-import org.junit.Rule;
 import org.junit.Test;
 import org.junit.experimental.runners.Enclosed;
 import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoJUnitRunner;
-import org.mockito.junit.MockitoRule;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 import static org.apache.bookkeeper.bookie.EntryLogger.UNASSIGNED_LEDGERID;
+import static org.apache.bookkeeper.bookie.EntryLogger.UNINITIALIZED_LOG_ID;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.*;
 
 @RunWith(value = Enclosed.class)
@@ -70,7 +69,139 @@ public class MyEntryLogTest {
 
 
     @RunWith(Parameterized.class)
-    public static class CreateLogTest {
+    public static class WriteLogTest {
+        private long ledgeridToSearch;
+        private List<Long> listledgerid;
+        private boolean expected;
+        private boolean expectedExceptionNull;
+        private boolean expectedExceptionIndexOut;
+        @Parameterized.Parameters
+        public static Collection<Object[]> data() {
+            return Arrays.asList(new Object[][]{
+                    /*Entries to write in log file,    ledger id to search*/
+                    { Arrays.asList(1L,2L,3L,4L),       1L},
+                    { Arrays.asList(1L,2L,3L,4L),       2L},
+                    { Arrays.asList(1L,2L,3L,4L),       4L},
+                    { Arrays.asList(1L,2L,3L,4L),       5L},
+                    { Arrays.asList(1L,null,3L,4L),     1L},
+                    { Arrays.asList(null,2L,3L,4L),     2L},
+                    { Arrays.asList(1L,null,3L,4L),     4L},
+                    { Arrays.asList(1L,2L,null,4L),     5L},
+                    { new ArrayList<>(),                1L}
+            });
+        }
+
+        public WriteLogTest(List<Long> listledgerid, long ledgeridToSearch) throws Exception {
+            this.listledgerid=listledgerid;
+            this.ledgeridToSearch=ledgeridToSearch;
+            getOracleTestWriteLog();
+            setUp();
+        }
+
+        @Test
+        public void testWriteLog() throws Exception {
+            ByteBuf entry;
+
+            try{
+                for(long i  : this.listledgerid){
+                    entry = generateEntry(i, 1);
+                    entryLogManager.addEntry(i, entry,true);
+                }
+
+                entryLogManager.createNewLog(UNASSIGNED_LEDGERID);
+                EntryLogMetadata meta = entryLogger.extractEntryLogMetadataFromIndex(0L);
+                assertEquals(this.expected,meta.getLedgersMap().containsKey(ledgeridToSearch));
+
+            }catch(NullPointerException e){
+                assertTrue(expectedExceptionNull);
+            }
+            catch(IndexOutOfBoundsException e){
+                assertTrue(expectedExceptionIndexOut);
+            }
+
+
+        }
+        public void getOracleTestWriteLog(){
+            this.expected= listledgerid.contains(ledgeridToSearch);
+            if(this.listledgerid.size()==0)
+                this.expectedExceptionIndexOut=  true;
+
+            if(listledgerid.contains(null))
+                this.expectedExceptionNull=true;
+
+
+        }
+    }
+
+    @RunWith(Parameterized.class)
+    public static class WriteMultipleLogTest {
+        private long ledgeridToSearch;
+        private List<Long> listledgerid;
+        private long positionLog;
+        private boolean expected;
+        private boolean expectedExceptionNull;
+        private boolean expectedExceptionFileNF;
+
+        @Parameterized.Parameters
+        public static Collection<Object[]> data() {
+            return Arrays.asList(new Object[][] {
+                    /*Entries to write in log file,    ledger id to search,        file where to search ledger id */
+                    { Arrays.asList(1L,2L,3L,4L),       1L,                        0L},
+                    { Arrays.asList(1L,2L,3L,4L),       2L,                        1L},
+                    { Arrays.asList(1L,2L,3L,4L),       4L,                        3L},
+                    { Arrays.asList(1L,2L,3L,4L),       5L,                        4L},
+                    { Arrays.asList(1L,2L,null,4L),     1L,                        0L},
+                    { Arrays.asList(1L,null,3L,4L),     2L,                        1L},
+                    { Arrays.asList(1L,2L,3L,null),     4L,                        3L},
+                    { Arrays.asList(null,2L,3L,4L),     5L,                        4L},
+                    { new ArrayList<>(),                5L,                        4L},
+            });
+        }
+
+        public WriteMultipleLogTest(List<Long> listledgerid, long ledgeridToSearch,long positionLog) throws Exception {
+            this.listledgerid=listledgerid;
+            this.ledgeridToSearch=ledgeridToSearch;
+            this.positionLog=positionLog;
+            getOracleTestWriteMultipleLog();
+            setUp();
+        }
+
+        @Test
+        public void testWriteLog() throws Exception {
+            ByteBuf entry;
+
+            try{
+                for(long i  : this.listledgerid){
+                    entry = generateEntry(i, 1);
+                    entryLogManager.addEntry(i, entry,true);
+                    entryLogManager.createNewLog(UNASSIGNED_LEDGERID);
+                }
+
+                entryLogManager.createNewLog(UNASSIGNED_LEDGERID);
+                EntryLogMetadata meta = entryLogger.extractEntryLogMetadataFromIndex(this.positionLog);
+                assertEquals(this.expected,meta.getLedgersMap().containsKey(ledgeridToSearch));
+
+            }catch(NullPointerException e){
+                assertTrue(expectedExceptionNull);
+            }
+            catch(FileNotFoundException e){
+                assertTrue(expectedExceptionFileNF);
+            }
+
+        }
+        public void getOracleTestWriteMultipleLog(){
+            this.expected = listledgerid.contains(ledgeridToSearch) && (positionLog==ledgeridToSearch-1);
+            if(this.listledgerid.size()==0)
+                this.expectedExceptionFileNF=  true;
+
+            if(listledgerid.contains(null))
+                this.expectedExceptionNull=true;
+        }
+    }
+
+
+    @RunWith(Parameterized.class)
+    public static class WhiteBoxTest {
         private int numberLogCreate;
         private int ledgerid;
         private int expected;
@@ -87,7 +218,7 @@ public class MyEntryLogTest {
             });
         }
 
-        public CreateLogTest(int numberLogCreate, int ledgerid) throws Exception {
+        public WhiteBoxTest(int numberLogCreate, int ledgerid) throws Exception {
             this.numberLogCreate=numberLogCreate;
             this.ledgerid=ledgerid;
             this.expected = getOracleTestCreateNewLog(this.numberLogCreate);
@@ -102,7 +233,7 @@ public class MyEntryLogTest {
             for(int i=0; i<this.numberLogCreate; i++){
                 entry = generateEntry(this.ledgerid, i);
                 entryLogManager.addEntry(this.ledgerid, entry,true);
-                entryLogManager.createNewLog(UNASSIGNED_LEDGERID);
+                entryLogManager.createNewLog(UNINITIALIZED_LOG_ID);
             }
 
             assertEquals(expected, entryLogManager.getCurrentLogId());
@@ -110,139 +241,44 @@ public class MyEntryLogTest {
 
         public int getOracleTestCreateNewLog(int numberExecution){
             if(numberExecution == 0 )
-                return EntryLogger.UNINITIALIZED_LOG_ID;
+                return UNINITIALIZED_LOG_ID;
             return numberExecution;
         }
     }
 
     @RunWith(Parameterized.class)
-    public static class WriteLogTest {
-        private long ledgeridToSearch;
-        private List<Long> listledgerid;
-        private boolean expected;
-
-        @Parameterized.Parameters
-        public static Collection<Object[]> data() {
-            return Arrays.asList(new Object[][] {
-                    { Arrays.asList(1L,2L,3L,4L),1L},
-                    { Arrays.asList(1L,2L,3L,4L),2L},
-                    { Arrays.asList(1L,2L,3L,4L),4L},
-                    { Arrays.asList(1L,2L,3L,4L),5L}
-            });
-        }
-
-        public WriteLogTest(List<Long> listledgerid, long ledgeridToSearch) throws Exception {
-            this.listledgerid=listledgerid;
-            this.ledgeridToSearch=ledgeridToSearch;
-            this.expected = getOracleTestWriteLog(listledgerid,ledgeridToSearch);
-            setUp();
-        }
-
-        @Test
-        public void testWriteLog() throws Exception {
-            ByteBuf entry;
-
-            for(long i  : this.listledgerid){
-                entry = generateEntry(i, 1);
-                entryLogManager.addEntry(i, entry,true);
-            }
-
-            entryLogManager.createNewLog(UNASSIGNED_LEDGERID);
-            EntryLogMetadata meta = entryLogger.extractEntryLogMetadataFromIndex(0L);
-            assertEquals(this.expected,meta.getLedgersMap().containsKey(ledgeridToSearch));
-
-        }
-        public boolean getOracleTestWriteLog(List<Long> listledgerid, long ledgeridToSearch){
-           return listledgerid.contains(ledgeridToSearch);
-        }
-    }
-
-    @RunWith(Parameterized.class)
-    public static class WriteMultipleLogTest {
-        private long ledgeridToSearch;
-        private List<Long> listledgerid;
-        private long positionLog;
-        private boolean expected;
-
-        @Parameterized.Parameters
-        public static Collection<Object[]> data() {
-            return Arrays.asList(new Object[][] {
-                    { Arrays.asList(1L,2L,3L,4L),1L,0L},
-                    { Arrays.asList(1L,2L,3L,4L),2L,1L},
-                    { Arrays.asList(1L,2L,3L,4L),4L,3L},
-                    { Arrays.asList(1L,2L,3L,4L),5L,4L}
-            });
-        }
-
-        public WriteMultipleLogTest(List<Long> listledgerid, long ledgeridToSearch,long positionLog) throws Exception {
-            this.listledgerid=listledgerid;
-            this.ledgeridToSearch=ledgeridToSearch;
-            this.positionLog=positionLog;
-            this.expected = getOracleTestWriteMultipleLog(listledgerid,ledgeridToSearch,positionLog);
-            setUp();
-        }
-
-        @Test
-        public void testWriteLog() throws Exception {
-            ByteBuf entry;
-
-            for(long i  : this.listledgerid){
-                entry = generateEntry(i, 1);
-                entryLogManager.addEntry(i, entry,true);
-                entryLogManager.createNewLog(UNASSIGNED_LEDGERID);
-            }
-
-            entryLogManager.createNewLog(UNASSIGNED_LEDGERID);
-            EntryLogMetadata meta = entryLogger.extractEntryLogMetadataFromIndex(this.positionLog);
-            assertEquals(this.expected,meta.getLedgersMap().containsKey(ledgeridToSearch));
-
-        }
-        public boolean getOracleTestWriteMultipleLog(List<Long> listledgerid, long ledgeridToSearch, long positionLog){
-            return listledgerid.contains(ledgeridToSearch) && (positionLog==ledgeridToSearch-1);
-        }
-    }
-
-
-    @RunWith(Parameterized.class)
-    public static class WhiteBoxTest  {
-
-        @Mock
-        AtomicBoolean shouldCreateNewEntryLog;
-        @Rule
-        public MockitoRule mockitoRule = MockitoJUnit.rule();
+    public static class WhiteBoxTest1  {
 
         private boolean isActiveLogChannelNull;
         private long defaulLogId;
-
         private boolean rollLong;
-
         private long ledgerid;
-
         private int ensize;
 
-        private boolean shouldCNE;
 
 
         @Parameterized.Parameters
         public static Collection<Object[]> data() {
             return Arrays.asList(new Object[][] {
-                    { true,1L,true,1L,1,true},
-                    { true,1L,false,1L,1,false},
-                    { true,1L,false,1L,1,true},
-                    { true,1L,true,1L,1,false},
-                    { false,1L,false,1L,1,false},
+                    /*logChannel is null,       default log id,      rollLong,   leadger id,  size   */
+                    { true,                     0L,                  true,       1L,           1,       },
+                    { true,                     0L,                  false,      1L,           1,       },
+                    { false,                    0L,                  true,       1L,           1,       },
+                    { false,                    0L,                  false,      1L,           1,       },
+                    { false,                    1L,                  true,       1L,     Integer.MAX_VALUE},
+                    { true,                     1L,                  true,       1L,     Integer.MAX_VALUE},
+                    { true,                     1L,                  false,      1L,     Integer.MAX_VALUE},
+                    { false,                    1L,                  false,      1L,     Integer.MAX_VALUE},
             });
         }
 
-        public WhiteBoxTest(boolean isActiveLogChannelNull,long defaulLogId,boolean rollLong,long ledgerid,int ensize,boolean shouldCNE) throws Exception {
+        public WhiteBoxTest1(boolean isActiveLogChannelNull,long defaulLogId,boolean rollLong,long ledgerid,int ensize) throws Exception {
             this.isActiveLogChannelNull = isActiveLogChannelNull;
             this.defaulLogId=defaulLogId;
             this.rollLong=rollLong;
             this.ledgerid=ledgerid;
             this.ensize=ensize;
-            this.shouldCNE=shouldCNE;
-            this.shouldCreateNewEntryLog = new AtomicBoolean(shouldCNE);
-            setUpWhiteBox();
+            setUp();
         }
 
         @Test
@@ -255,7 +291,7 @@ public class MyEntryLogTest {
             }
 
             buffer = entryLogManager.getCurrentLogForLedgerForAddEntry(ledgerid,ensize,rollLong);
-            assertEquals(buffer.getLogId(),defaulLogId);
+            assertEquals(defaulLogId,buffer.getLogId());
 
         }
 
@@ -318,6 +354,15 @@ public class MyEntryLogTest {
             entryLogManagerTest.flushRotatedLogs();
         }
 
+        @Test
+        public void testWhiteBox5() throws Exception {
+            setUpWhiteBoxMock();
+            entryLogManagerTest.flushRotatedLogs();
+            assertEquals(0,entryLogManagerTest.rotatedLogChannels.size());
+
+        }
+
+
         public void setUpWhiteBoxMethod(boolean hasRotatedLogChannels,boolean throwException) throws Exception {
 
             if(hasRotatedLogChannels){
@@ -335,6 +380,14 @@ public class MyEntryLogTest {
                 entryLogManagerTest=entryLogManagerNoInject;
             }
 
+        }
+
+        public void setUpWhiteBoxMock() throws IOException {
+            entryLogManagerTest=getNoMockManager();
+            channel=mock(EntryLogger.BufferedLogChannel.class);
+            doNothing().when(channel).flushAndForceWrite(anyBoolean());
+            entryLogManagerTest.setCurrentLogForLedgerAndAddToRotate(0,channel);
+            entryLogManagerTest.setCurrentLogForLedgerAndAddToRotate(1,channel);
 
         }
 
