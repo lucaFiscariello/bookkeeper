@@ -141,7 +141,7 @@ public class MyNetworkTopologyTest {
         @Parameterized.Parameters
         public static Collection<Object[]> data() {
             return Arrays.asList(new Object[][] {
-                    //rack number, node added
+                    /*racknumber,node added,type rack,typeid*/
                     {2,0,TypeRack.ALL_VALID,TypeId.ALL_VALID},
                     {2,1,TypeRack.ALL_VALID,TypeId.ALL_VALID},
                     {2,4,TypeRack.ALL_VALID,TypeId.ALL_VALID},
@@ -271,7 +271,7 @@ public class MyNetworkTopologyTest {
         @Parameterized.Parameters
         public static Collection<Object[]> data() {
             return Arrays.asList(new Object[][] {
-                    //rack number,nodeadded,validString
+                    /*rack number,nodeadded,rack,idbookie*/
                     {0,2,validRack,validBookieID},
                     {1,2,validRack,validBookieID},
                     {3,2,validRack,validBookieID},
