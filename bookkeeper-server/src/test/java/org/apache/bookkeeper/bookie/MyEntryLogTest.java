@@ -38,6 +38,7 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
+import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnitRunner;
 
 import java.io.File;
@@ -348,10 +349,19 @@ public class MyEntryLogTest {
             assertEquals(0,entryLogManagerTest.rotatedLogChannels.size());
         }
 
-        @Test(expected = IOException.class)
+        @Test
         public void testWhiteBox4() throws Exception {
             setUpWhiteBoxMethod(false,true);
-            entryLogManagerTest.flushRotatedLogs();
+
+            try{
+                entryLogManagerTest.flushRotatedLogs();
+            }catch (IOException e ){
+                assertTrue(true);
+            }
+
+            int finalSize= entryLogManagerTest.getRotatedLogChannels().size();
+
+            assertTrue(finalSize>0);
         }
 
         @Test
@@ -362,6 +372,36 @@ public class MyEntryLogTest {
 
         }
 
+        @Test
+        public void testPit6() throws Exception {
+            setUpWhiteBoxMock();
+            List<File> files = new ArrayList<>();
+
+            File file1 = File.createTempFile("temp1", null);
+            File file2 = File.createTempFile("temp2", null);
+            File file3 = File.createTempFile("temp3", null);
+            File file4 = File.createTempFile("temp4", null);
+
+            files.add(file1);
+            files.add(file2);
+            files.add(file3);
+            files.add(file4);
+
+            List<File> spyList = Mockito.spy(files);
+            Mockito.doReturn(file1).when(spyList).get(anyInt());
+
+            entryLogManagerTest.getDirForNextEntryLog(spyList);
+            Mockito.verify(spyList).size();
+            
+        }
+
+        @Test
+        public void testPit7() throws Exception {
+            setUpWhiteBoxMock();
+            entryLogManagerTest.checkpoint();
+
+            assertEquals(0, entryLogManagerTest.getRotatedLogChannels().size());
+        }
 
         public void setUpWhiteBoxMethod(boolean hasRotatedLogChannels,boolean throwException) throws Exception {
 
@@ -375,6 +415,8 @@ public class MyEntryLogTest {
                 entryLogManagerTest=entryLogManagerInject;
                 doThrow(new IOException()).when(channel).flushAndForceWrite(isA(boolean.class));
                 entryLogManagerTest.setCurrentLogForLedgerAndAddToRotate(1,channel);
+                entryLogManagerTest.setCurrentLogForLedgerAndAddToRotate(2,channel);
+
             }
             else{
                 entryLogManagerTest=entryLogManagerNoInject;

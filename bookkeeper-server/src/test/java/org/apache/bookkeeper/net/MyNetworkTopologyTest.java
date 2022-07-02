@@ -237,10 +237,15 @@ public class MyNetworkTopologyTest {
 
                 for(int k = 0;k<numberRack;k++){
                     Set<Node> leavesScopeRack = networkTopology.getLeaves(rack+k);
+
+                    if(!(leavesScopeRack instanceof HashSet)){
+                        throw new ClassCastException();
+                    }
+
                     actualValue=actualValue+leavesScopeRack.size();
                 }
 
-            }catch (IllegalArgumentException e){
+            }catch (IllegalArgumentException | ClassCastException e){
                 actualValue=-1;
             }
 
@@ -371,6 +376,8 @@ public class MyNetworkTopologyTest {
                 actualNodes.addAll(networkTopology.getLeaves(rackTemplate+i));
 
             assertEquals(actualNodes, allNodeGenerate);
+            assertEquals(networkTopology.getNumOfRacks(), numberRack);
+
 
         }
 
@@ -393,6 +400,8 @@ public class MyNetworkTopologyTest {
                 actualNodes.addAll(networkTopology.getLeaves(rackTemplate+i));
 
             assertEquals(expected,actualNodes);
+            assertEquals(networkTopology.getNumOfRacks(), numberRack);
+
 
         }
 
@@ -418,6 +427,7 @@ public class MyNetworkTopologyTest {
                 actualNodes.addAll(networkTopology.getLeaves(rackTemplate+i));
 
             assertEquals(allNodeGenerate,actualNodes);
+            assertEquals(networkTopology.getNumOfRacks(), numberRack);
 
         }
 
