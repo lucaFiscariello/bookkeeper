@@ -49,7 +49,6 @@ import java.net.SocketException;
 import java.util.*;
 
 import static org.apache.bookkeeper.bookie.EntryLogger.UNASSIGNED_LEDGERID;
-import static org.apache.bookkeeper.bookie.EntryLogger.UNINITIALIZED_LOG_ID;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.mockito.Mockito.*;
@@ -86,7 +85,7 @@ public class MyEntryLogTest {
                     { Arrays.asList(1L,2L,3L,4L),       5L},
                     { Arrays.asList(1L,null,3L,4L),     1L},
                     { Arrays.asList(null,2L,3L,4L),     2L},
-                    { Arrays.asList(1L,null,3L,4L),     4L},
+                    { Arrays.asList(1L,2L,3L,null),     4L},
                     { Arrays.asList(1L,2L,null,4L),     5L},
                     { new ArrayList<>(),                1L}
             });
@@ -156,6 +155,14 @@ public class MyEntryLogTest {
                     { Arrays.asList(1L,2L,3L,null),     4L,                        3L},
                     { Arrays.asList(null,2L,3L,4L),     5L,                        4L},
                     { new ArrayList<>(),                5L,                        4L},
+                    { Arrays.asList(1L,2L,3L,4L),       1L,                        2L},
+                    { Arrays.asList(1L,2L,3L,4L),       2L,                        3L},
+                    { Arrays.asList(1L,2L,3L,4L),       4L,                        4L},
+                    { Arrays.asList(1L,2L,3L,4L),       5L,                        1L},
+                    { Arrays.asList(1L,2L,null,4L),     1L,                        2L},
+                    { Arrays.asList(1L,null,3L,4L),     2L,                        3L},
+                    { Arrays.asList(1L,2L,3L,null),     4L,                        5L},
+                    { Arrays.asList(null,2L,3L,4L),     5L,                        6L},
             });
         }
 
@@ -202,84 +209,43 @@ public class MyEntryLogTest {
 
 
     @RunWith(Parameterized.class)
-    public static class WhiteBoxTest {
-        private int numberLogCreate;
-        private int ledgerid;
-        private int expected;
-
-        @Parameterized.Parameters
-        public static Collection<Object[]> data() {
-            return Arrays.asList(new Object[][] {
-                    { 0,1},
-                    { 1,1},
-                    { 4,1},
-                    { 0,2},
-                    { 1,2},
-                    { 4,2},
-            });
-        }
-
-        public WhiteBoxTest(int numberLogCreate, int ledgerid) throws Exception {
-            this.numberLogCreate=numberLogCreate;
-            this.ledgerid=ledgerid;
-            this.expected = getOracleTestCreateNewLog(this.numberLogCreate);
-            setUp();
-        }
-
-        @Test
-        public void testCreateNewLog() throws Exception {
-
-            ByteBuf entry;
-
-            for(int i=0; i<this.numberLogCreate; i++){
-                entry = generateEntry(this.ledgerid, i);
-                entryLogManager.addEntry(this.ledgerid, entry,true);
-                entryLogManager.createNewLog(UNINITIALIZED_LOG_ID);
-            }
-
-            assertEquals(expected, entryLogManager.getCurrentLogId());
-        }
-
-        public int getOracleTestCreateNewLog(int numberExecution){
-            if(numberExecution == 0 )
-                return UNINITIALIZED_LOG_ID;
-            return numberExecution;
-        }
-    }
-
-    @RunWith(Parameterized.class)
     public static class WhiteBoxTest1  {
 
         private boolean isActiveLogChannelNull;
-        private long defaulLogId;
+        private long defaulLogId=0L;
         private boolean rollLong;
-        private long ledgerid;
+        private long ledgerid=1L;
         private int ensize;
+        private long expected;
 
 
 
         @Parameterized.Parameters
         public static Collection<Object[]> data() {
             return Arrays.asList(new Object[][] {
-                    /*logChannel is null,       default log id,      rollLong,   leadger id,  size   */
-                    { true,                     0L,                  true,       1L,           1,       },
-                    { true,                     0L,                  false,      1L,           1,       },
-                    { false,                    0L,                  true,       1L,           1,       },
-                    { false,                    0L,                  false,      1L,           1,       },
-                    { false,                    1L,                  true,       1L,     Integer.MAX_VALUE},
-                    { true,                     1L,                  true,       1L,     Integer.MAX_VALUE},
-                    { true,                     1L,                  false,      1L,     Integer.MAX_VALUE},
-                    { false,                    1L,                  false,      1L,     Integer.MAX_VALUE},
+                    /*logChannel is null,      rollLong,     size   */
+                    { true,                    true,           1,       },
+                    { true,                    false,          1,       },
+                    { false,                   true,           1,       },
+                    { false,                   false,          1,       },
+                    { false,                   true,           Integer.MAX_VALUE},
+                    { true,                    true,           Integer.MAX_VALUE},
+                    { true,                    false,          Integer.MAX_VALUE},
+                    { false,                   false,          Integer.MAX_VALUE},
+                    { false,                   false,          -1       },
+                    { true,                    false,          -1,       },
+                    { false,                   true,           -1,       },
+                    { false,                   false,          -1,       },
+
             });
         }
 
-        public WhiteBoxTest1(boolean isActiveLogChannelNull,long defaulLogId,boolean rollLong,long ledgerid,int ensize) throws Exception {
+        public WhiteBoxTest1(boolean isActiveLogChannelNull,boolean rollLong,int ensize) throws Exception {
             this.isActiveLogChannelNull = isActiveLogChannelNull;
-            this.defaulLogId=defaulLogId;
             this.rollLong=rollLong;
-            this.ledgerid=ledgerid;
             this.ensize=ensize;
             setUp();
+            getOracle();
         }
 
         @Test
@@ -292,8 +258,16 @@ public class MyEntryLogTest {
             }
 
             buffer = entryLogManager.getCurrentLogForLedgerForAddEntry(ledgerid,ensize,rollLong);
-            assertEquals(defaulLogId,buffer.getLogId());
+            assertEquals(expected,buffer.getLogId());
 
+        }
+
+        public void getOracle(){
+
+            expected=defaulLogId;
+
+            if(ensize==Integer.MAX_VALUE)
+                expected=1;
         }
 
 
@@ -335,41 +309,24 @@ public class MyEntryLogTest {
             entryLogManagerTest.flushRotatedLogs();
         }
 
-        @Test
+        @Test(expected = IOException.class)
         public void testWhiteBox2() throws Exception {
-            setUpWhiteBoxMethod(false,false);
+            setUpWhiteBoxMethod(false,true);
             entryLogManagerTest.flushRotatedLogs();
             assertEquals(0,entryLogManagerTest.rotatedLogChannels.size());
         }
-
-        @Test
+        @Test(expected = IOException.class)
         public void testWhiteBox3() throws Exception {
-            setUpWhiteBoxMethod(false,false);
+            setUpWhiteBoxMethod(false,true);
             entryLogManagerTest.flushRotatedLogs();
             assertEquals(0,entryLogManagerTest.rotatedLogChannels.size());
         }
 
         @Test
         public void testWhiteBox4() throws Exception {
-            setUpWhiteBoxMethod(false,true);
-
-            try{
-                entryLogManagerTest.flushRotatedLogs();
-            }catch (IOException e ){
-                assertTrue(true);
-            }
-
-            int finalSize= entryLogManagerTest.getRotatedLogChannels().size();
-
-            assertTrue(finalSize>0);
-        }
-
-        @Test
-        public void testWhiteBox5() throws Exception {
-            setUpWhiteBoxMock();
+            setUpWhiteBoxMethod(false,false);
             entryLogManagerTest.flushRotatedLogs();
             assertEquals(0,entryLogManagerTest.rotatedLogChannels.size());
-
         }
 
         @Test

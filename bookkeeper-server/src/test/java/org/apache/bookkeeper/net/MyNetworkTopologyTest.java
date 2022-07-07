@@ -38,7 +38,7 @@ import static org.mockito.Mockito.when;
 public class MyNetworkTopologyTest {
 
     @RunWith(Parameterized.class)
-    public static class TestSingleWrite  {
+    public static class TestWrite  {
 
         private NetworkTopologyImpl networkTopology;
         int expected;
@@ -66,7 +66,7 @@ public class MyNetworkTopologyTest {
             });
         }
 
-        public TestSingleWrite(int numberAddedNode, String rack, String id) {
+        public TestWrite(int numberAddedNode, String rack, String id) {
             networkTopology = new NetworkTopologyImpl();
             this.bookieId=id;
             this.rack=rack;
@@ -238,6 +238,7 @@ public class MyNetworkTopologyTest {
                 for(int k = 0;k<numberRack;k++){
                     Set<Node> leavesScopeRack = networkTopology.getLeaves(rack+k);
 
+                    //Pit
                     if(!(leavesScopeRack instanceof HashSet)){
                         throw new ClassCastException();
                     }
@@ -376,6 +377,8 @@ public class MyNetworkTopologyTest {
                 actualNodes.addAll(networkTopology.getLeaves(rackTemplate+i));
 
             assertEquals(actualNodes, allNodeGenerate);
+
+            //Pit
             assertEquals(networkTopology.getNumOfRacks(), numberRack);
 
 
@@ -400,6 +403,8 @@ public class MyNetworkTopologyTest {
                 actualNodes.addAll(networkTopology.getLeaves(rackTemplate+i));
 
             assertEquals(expected,actualNodes);
+
+            //Pit
             assertEquals(networkTopology.getNumOfRacks(), numberRack);
 
 
@@ -427,6 +432,8 @@ public class MyNetworkTopologyTest {
                 actualNodes.addAll(networkTopology.getLeaves(rackTemplate+i));
 
             assertEquals(allNodeGenerate,actualNodes);
+
+            //Pit
             assertEquals(networkTopology.getNumOfRacks(), numberRack);
 
         }
